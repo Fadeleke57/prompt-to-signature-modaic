@@ -15,6 +15,7 @@ import { Loader2, Copy, Check } from "lucide-react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 export default function Home() {
   const [prompt, setPrompt] = useState("");
@@ -79,29 +80,27 @@ export default function Home() {
     <div>
       <div className="w-full h-20 border-b-2 border-black justify-between items-center flex px-16">
         <div className="font-semibold font-press-start-2p">sgntrs.dev</div>
-        <div className="flex items-center gap-4 font-mono">
+        <div className="flex items-center gap-4">
           <Button
-            variant={view === "code" ? "default" : "ghost"}
+            variant={view === "code" ? "secondary" : "ghost"}
             onClick={() => setView("code")}
-            className={cn(
-              "cursor-pointer text-md hover:bg-blue-500 hover:text-black",
-              view === "code" ? "bg-blue-500 text-black" : "text-gray-700"
-            )}
+            className={cn("cursor-pointer text-md transition-all")}
           >
             Code
           </Button>
           <Button
-            variant={view === "info" ? "default" : "ghost"}
+            variant={view === "info" ? "secondary" : "ghost"}
             onClick={() => setView("info")}
-            className={cn(
-              "cursor-pointer text-md hover:bg-blue-500 hover:text-black",
-              view === "info" ? "bg-blue-500 text-black" : "text-gray-700"
-            )}
+            className={cn("cursor-pointer text-md transition-all")}
           >
             Learn about Signatures
           </Button>
         </div>
-        <div className="font-semibold font-press-start-2p">Modaic</div>
+        <div className="font-semibold font-press-start-2p">
+          <Link href={"https://modaic.dev/"} target="_blank">
+            Modaic
+          </Link>
+        </div>
       </div>
       <div className="min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-950 dark:to-zinc-900 py-12 px-4">
         <div className="max-w-4xl mx-auto space-y-8">
@@ -145,9 +144,13 @@ export default function Home() {
                   </label>
                 </div>
 
-                <Button onClick={handleSubmit} disabled={loading}>
+                <Button
+                  onClick={handleSubmit}
+                  variant={"secondary"}
+                  disabled={loading}
+                >
                   {loading && <Loader2 className="animate-spin" />}
-                  Generate Signature
+                  {loading ? "Generating..." : "Generate Signature"}
                 </Button>
               </div>
 
@@ -215,15 +218,23 @@ export default function Home() {
       <div className="w-full h-20 justify-between items-center border-t-2 border-black flex px-16">
         <div className="font-semibold font-press-start-2p">sgntrs.dev</div>
         <div className="flex items-center gap-1 font-medium text-gray-600">
-          <Button variant={"link"} className="cursor-pointer text-gray-600">
-            Modaic
-          </Button>
-          <Button variant={"link"} className="cursor-pointer text-gray-600">
-            DSPy Docs
-          </Button>
-          <Button variant={"link"} className="cursor-pointer text-gray-600">
-            Contact
-          </Button>
+          <Link href={"https://modaic.dev/"} target="_blank">
+            <Button variant={"link"} className="cursor-pointer text-gray-600">
+              Modaic
+            </Button>
+          </Link>
+
+          <Link href={"https://dspy.ai/"} target="_blank">
+            <Button variant={"link"} className="cursor-pointer text-gray-600">
+              DSPy Docs
+            </Button>
+          </Link>
+
+          <Link href={"https://discord.gg/5NZ3GZNq5k"} target="_blank">
+            <Button variant={"link"} className="cursor-pointer text-gray-600">
+              Discord
+            </Button>
+          </Link>
         </div>
       </div>
     </div>
