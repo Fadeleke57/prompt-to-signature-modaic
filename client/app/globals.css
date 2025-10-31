@@ -41,6 +41,8 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --font-press-start-2p: var(--font-press-start-2p);
+  --font-mono: var(--font-mono);
 }
 
 :root {

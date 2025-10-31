@@ -1,28 +1,39 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Switch } from "@/components/ui/switch"
-import { Loader2 } from "lucide-react"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Loader2, Copy, Check } from "lucide-react";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { cn } from "@/lib/utils";
 
 export default function Home() {
-  const [prompt, setPrompt] = useState("")
-  const [refine, setRefine] = useState(false)
-  const [generatedCode, setGeneratedCode] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
+  const [prompt, setPrompt] = useState("");
+  const [view, setView] = useState<"code" | "info">("code");
+  const [refine, setRefine] = useState(false);
+  const [generatedCode, setGeneratedCode] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [copied, setCopied] = useState(false);
 
   const handleSubmit = async () => {
     if (!prompt.trim()) {
-      setError("Please enter a prompt")
-      return
+      setError("Please enter a prompt");
+      return;
     }
 
-    setLoading(true)
-    setError("")
-    setGeneratedCode("")
+    setLoading(true);
+    setError("");
+    setGeneratedCode("");
 
     try {
       const response = await fetch("http://localhost:8000/prompt", {
@@ -34,85 +45,187 @@ export default function Home() {
           prompt: prompt,
           refine: refine,
         }),
-      })
+      });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json()
-      setGeneratedCode(JSON.stringify(data, null, 2))
+      const data = await response.json();
+      // Extract the actual code from the response
+      const code =
+        typeof data === "string"
+          ? data
+          : data.code || data.signature || JSON.stringify(data, null, 2);
+      setGeneratedCode(code);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred")
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(generatedCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-950 dark:to-zinc-900 py-12 px-4">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold tracking-tight">Prompt to Signature</h1>
-          <p className="text-muted-foreground">Convert natural language prompts into function signatures</p>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Enter Your Prompt</CardTitle>
-            <CardDescription>Describe the function you want to create</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Textarea
-              placeholder="e.g., A function that calculates the factorial of a number"
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              className="min-h-32"
-            />
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Switch
-                  id="refine"
-                  checked={refine}
-                  onCheckedChange={setRefine}
-                />
-                <label
-                  htmlFor="refine"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  Refine output
-                </label>
-              </div>
-
-              <Button onClick={handleSubmit} disabled={loading}>
-                {loading && <Loader2 className="animate-spin" />}
-                Generate Signature
-              </Button>
-            </div>
-
-            {error && (
-              <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm">
-                {error}
-              </div>
+    <div>
+      <div className="w-full h-20 border-b-2 border-black justify-between items-center flex px-16">
+        <div className="font-semibold font-press-start-2p">sgntrs.dev</div>
+        <div className="flex items-center gap-4 font-mono">
+          <Button
+            variant={view === "code" ? "default" : "ghost"}
+            onClick={() => setView("code")}
+            className={cn(
+              "cursor-pointer text-md hover:bg-blue-500 hover:text-black",
+              view === "code" ? "bg-blue-500 text-black" : "text-gray-700"
             )}
-          </CardContent>
-        </Card>
+          >
+            Code
+          </Button>
+          <Button
+            variant={view === "info" ? "default" : "ghost"}
+            onClick={() => setView("info")}
+            className={cn(
+              "cursor-pointer text-md hover:bg-blue-500 hover:text-black",
+              view === "info" ? "bg-blue-500 text-black" : "text-gray-700"
+            )}
+          >
+            Learn about Signatures
+          </Button>
+        </div>
+        <div className="font-semibold font-press-start-2p">Modaic</div>
+      </div>
+      <div className="min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-950 dark:to-zinc-900 py-12 px-4">
+        <div className="max-w-4xl mx-auto space-y-8">
+          <div className="text-center space-y-2">
+            <h1 className="text-4xl tracking-tightest font-press-start-2p">
+              Prompt to Signature
+            </h1>
+            <p className="text-muted-foreground font-medium">
+              Convert natural language prompts into DSPy signatures
+            </p>
+          </div>
 
-        {generatedCode && (
-          <Card>
+          <Card className="rounded-sm border-b-2">
             <CardHeader>
-              <CardTitle>Generated Code</CardTitle>
-              <CardDescription>Your function signature is ready</CardDescription>
+              <CardTitle>Enter Your Prompt</CardTitle>
+              <CardDescription>
+                Aim to be as descriptive as possible, if your signature is
+                lacking it&apos;s likely because your prompt is too!
+              </CardDescription>
             </CardHeader>
-            <CardContent>
-              <pre className="p-4 rounded-lg bg-zinc-950 dark:bg-zinc-900 text-zinc-50 overflow-x-auto">
-                <code className="text-sm font-mono">{generatedCode}</code>
-              </pre>
+            <CardContent className="space-y-4">
+              <Textarea
+                placeholder="e.g., A function that calculates the factorial of a number"
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                className="min-h-32"
+              />
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="refine"
+                    checked={refine}
+                    onCheckedChange={setRefine}
+                  />
+                  <label
+                    htmlFor="refine"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    Interactive Mode
+                  </label>
+                </div>
+
+                <Button onClick={handleSubmit} disabled={loading}>
+                  {loading && <Loader2 className="animate-spin" />}
+                  Generate Signature
+                </Button>
+              </div>
+
+              {error && (
+                <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm">
+                  {error}
+                </div>
+              )}
             </CardContent>
           </Card>
-        )}
+
+          {generatedCode && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <CardTitle>Generated Code</CardTitle>
+                    <CardDescription>
+                      Your DSPy signature is ready
+                    </CardDescription>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopy}
+                    className="gap-2"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="h-4 w-4" />
+                        Copied
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-4 w-4" />
+                        Copy
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="relative rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-800">
+                  <SyntaxHighlighter
+                    language="python"
+                    style={vscDarkPlus}
+                    customStyle={{
+                      margin: 0,
+                      padding: "1.5rem",
+                      fontSize: "0.875rem",
+                      lineHeight: "1.5",
+                      background: "#1e1e1e",
+                    }}
+                    showLineNumbers={true}
+                    wrapLines={true}
+                  >
+                    {generatedCode}
+                  </SyntaxHighlighter>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+      <div className="w-full h-20 justify-between items-center border-t-2 border-black flex px-16">
+        <div className="font-semibold font-press-start-2p">sgntrs.dev</div>
+        <div className="flex items-center gap-1 font-medium text-gray-600">
+          <Button variant={"link"} className="cursor-pointer text-gray-600">
+            Modaic
+          </Button>
+          <Button variant={"link"} className="cursor-pointer text-gray-600">
+            DSPy Docs
+          </Button>
+          <Button variant={"link"} className="cursor-pointer text-gray-600">
+            Contact
+          </Button>
+        </div>
       </div>
     </div>
-  )
+  );
 }
