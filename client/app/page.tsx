@@ -110,7 +110,8 @@ export default function Home() {
               Prompt to Signature
             </h1>
             <p className="text-muted-foreground font-medium">
-              Convert natural language prompts into DSPy signatures
+              Convert lossy, static language prompts into structured DSPy
+              signatures
             </p>
           </div>
 
