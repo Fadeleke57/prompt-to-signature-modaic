@@ -4,13 +4,15 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 from modaic import AutoAgent
+from config import settings
 
 prompt_to_signature_agent = AutoAgent.from_precompiled("fadeleke/prompt-to-signature")
 app = FastAPI()
 
 origins = [
     "*",
-    "http://locaholhost:3000"
+    settings.client_url,
+    settings.api_url,
 ] 
 
 app.add_middleware(
@@ -30,7 +32,7 @@ def read_root():
     return {"Message": "Hello World! FastAPI is working."}
 
 @app.post("/prompt")
-async def create_secret(payload: PromptPayload):
+async def create_prompt(payload: PromptPayload):
     result = prompt_to_signature_agent(payload.prompt, refine=payload.refine)
     code = prompt_to_signature_agent.generate_code(result)
     return JSONResponse(content=code)
