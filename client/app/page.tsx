@@ -18,6 +18,19 @@ import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
+const promptPlaceholder = `You are analyzing customer reviews for a restaurant. Given a review text, classify the sentiment into one of three categories:
+
+Positive: Customer had a good experience
+Negative: Customer had a bad experience
+Neutral: Mixed feelings or factual statement without clear sentiment
+
+Examples:
+
+1. "Amazing food and excellent service! Will definitely come back." → Positive
+2. "The pasta was cold and the waiter was rude." → Negative
+3. "The restaurant is located downtown. They serve Italian food." → Neutral
+`;
+
 export default function Home() {
   const [prompt, setPrompt] = useState("");
   const [view, setView] = useState<"code" | "info">("code");
@@ -103,15 +116,14 @@ export default function Home() {
           </Link>
         </div>
       </div>
-      <div className="min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-950 dark:to-zinc-900 py-12 px-4">
+      <div className="min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-950 dark:to-zinc-900 py-12 px-4 flex flex-col items-center justify-center">
         <div className="max-w-4xl mx-auto space-y-8">
           <div className="text-center space-y-2">
             <h1 className="text-4xl tracking-tightest font-press-start-2p">
               Prompt to Signature
             </h1>
             <p className="text-muted-foreground font-medium">
-              Convert lossy, static language prompts into structured DSPy
-              signatures
+              Convert lossy, static prompts into structured DSPy signatures
             </p>
           </div>
 
@@ -125,10 +137,10 @@ export default function Home() {
             </CardHeader>
             <CardContent className="space-y-4">
               <Textarea
-                placeholder="e.g., A function that calculates the factorial of a number"
+                placeholder={promptPlaceholder}
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                className="min-h-32"
+                className="min-h-32 max-h-64"
               />
 
               <div className="flex items-center justify-between">
