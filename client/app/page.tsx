@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { environment } from "@/lib/environment";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, Copy, Check } from "lucide-react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
@@ -37,7 +38,7 @@ export default function Home() {
     setGeneratedCode("");
 
     try {
-      const response = await fetch("http://localhost:8000/prompt", {
+      const response = await fetch(environment.api_url + "/prompt", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
