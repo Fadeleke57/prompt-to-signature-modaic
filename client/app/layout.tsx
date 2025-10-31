@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { fontGrotesk, fontPressStart2P, fontWorkSans } from "@/lib/fonts";
 import "./globals.css";
 
@@ -18,6 +19,7 @@ export default function RootLayout({
         className={`${fontGrotesk.variable} ${fontPressStart2P.variable} ${fontWorkSans.variable} antialiased`}
       >
         {children}
+        <Analytics />
       </body>
     </html>
   );
