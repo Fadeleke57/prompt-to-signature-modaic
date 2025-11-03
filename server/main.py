@@ -6,7 +6,6 @@ from datetime import datetime
 from modaic import AutoAgent
 from config import settings
 
-prompt_to_signature_agent = AutoAgent.from_precompiled("fadeleke/prompt-to-signature")
 app = FastAPI()
 
 origins = [

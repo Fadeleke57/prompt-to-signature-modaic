@@ -143,8 +143,8 @@ export default function Home() {
                 className="min-h-32 max-h-64"
               />
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+              <div className="flex items-center justify-end">
+                {/*<div className="flex items-center gap-2">
                   <Switch
                     id="refine"
                     checked={refine}
@@ -156,7 +156,7 @@ export default function Home() {
                   >
                     Interactive Mode
                   </label>
-                </div>
+                </div>*/}
 
                 <Button
                   onClick={handleSubmit}
