@@ -17,6 +17,18 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import {
+  medicalRecordPrompt,
+  ecomProductReviewPrompt,
+  legalContractClausePrompt,
+  newsArticleTopicPrompt,
+  customerSupportTicketPrompt,
+  resumeParsingPrompt,
+  financialDocumentAnalysis,
+  socialMediaContentModeration,
+  academicPaperClassification,
+  voiceOfCustomerAnalysis,
+} from "@/lib/prompts";
 
 const promptPlaceholder = `You are analyzing customer reviews for a restaurant. Given a review text, classify the sentiment into one of three categories:
 
@@ -30,6 +42,19 @@ Examples:
 2. "The pasta was cold and the waiter was rude." → Negative
 3. "The restaurant is located downtown. They serve Italian food." → Neutral
 `;
+
+const examplePrompts = [
+  { name: "Medical Record Analysis", content: medicalRecordPrompt },
+  { name: "E-commerce Review Analysis", content: ecomProductReviewPrompt },
+  { name: "Legal Contract Analysis", content: legalContractClausePrompt },
+  { name: "News Article Classification", content: newsArticleTopicPrompt },
+  { name: "Support Ticket Triage", content: customerSupportTicketPrompt },
+  { name: "Resume Parsing", content: resumeParsingPrompt },
+  { name: "Invoice Processing", content: financialDocumentAnalysis },
+  { name: "Content Moderation", content: socialMediaContentModeration },
+  { name: "Academic Paper Analysis", content: academicPaperClassification },
+  { name: "Customer Feedback Analysis", content: voiceOfCustomerAnalysis },
+];
 
 export default function Home() {
   const [prompt, setPrompt] = useState("");
@@ -92,59 +117,86 @@ export default function Home() {
 
   return (
     <div>
-      <div className="w-full h-20 border-b-2 border-black justify-between items-center flex px-16">
-        <div className="font-semibold font-press-start-2p">sgntrs.dev</div>
-        <div className="flex items-center gap-4">
+      <div className="w-full min-h-20 border-b-2 border-black justify-between items-center flex flex-wrap gap-4 px-4 sm:px-8 lg:px-16 py-4">
+        <div className="font-semibold font-press-start-2p text-xs sm:text-sm">sgntrs.dev</div>
+        <div className="flex items-center gap-2 sm:gap-4 order-3 sm:order-2">
           <Button
-            variant={view === "code" ? "secondary" : "ghost"}
             onClick={() => setView("code")}
-            className={cn("cursor-pointer text-md transition-all")}
+            className={cn(
+              "cursor-pointer text-xs sm:text-sm md:text-md transition-all",
+              view === "code" ? "bg-orange-400" : "bg-transparent"
+            )}
           >
             Code
           </Button>
           <Button
-            variant={view === "info" ? "secondary" : "ghost"}
             onClick={() => setView("info")}
-            className={cn("cursor-pointer text-md transition-all")}
+            className={cn(
+              "cursor-pointer text-xs sm:text-sm md:text-md transition-all whitespace-nowrap",
+              view === "info" ? "bg-orange-400" : "bg-transparent"
+            )}
           >
-            Learn about Signatures
+            <span className="hidden sm:inline">Learn about Signatures</span>
+            <span className="sm:hidden">Signatures</span>
           </Button>
         </div>
-        <div className="font-semibold font-press-start-2p">
+        <div className="font-semibold font-press-start-2p text-xs sm:text-sm order-2 sm:order-3">
           <Link href={"https://modaic.dev/"} target="_blank">
-            Modaic
+            <span className="hidden sm:inline">Powered by </span><span className="text-orange-500">Modaic</span>
           </Link>
         </div>
       </div>
       <div className="min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-950 dark:to-zinc-900 py-12 px-4 flex flex-col items-center justify-center">
         <div className="max-w-4xl mx-auto space-y-8">
           <div className="text-center space-y-2">
-            <h1 className="text-4xl tracking-tightest font-press-start-2p">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl tracking-tightest font-press-start-2p">
               Prompt to Signature
             </h1>
-            <p className="text-muted-foreground font-medium">
+            <p className="text-sm sm:text-base text-muted-foreground font-medium px-4">
               Convert lossy, static prompts into structured DSPy signatures
             </p>
           </div>
 
-          <Card className="rounded-sm border-b-2">
-            <CardHeader>
-              <CardTitle>Enter Your Prompt</CardTitle>
-              <CardDescription>
-                Aim to be as descriptive as possible, if your signature is
-                lacking it&apos;s likely because your prompt is too!
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Textarea
-                placeholder={promptPlaceholder}
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                className="min-h-32 max-h-64"
-              />
+          {view === "code" && (
+            <Card className="rounded-sm border-b-2">
+              <CardHeader>
+                <CardTitle>Enter Your Prompt</CardTitle>
+                <CardDescription>
+                  Aim to be as descriptive as possible, if your signature is
+                  lacking it&apos;s likely because your prompt is too!
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Textarea
+                  placeholder={promptPlaceholder}
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  className="min-h-60 max-h-64"
+                />
 
-              <div className="flex items-center justify-end">
-                {/*<div className="flex items-center gap-2">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Try an example prompt:
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {examplePrompts.map((example, index) => (
+                      <Button
+                        key={index}
+                        size="sm"
+                        onClick={() => setPrompt(example.content)}
+                        className={cn(
+                          "text-xs",
+                          prompt === example.content ? "bg-blue-600" : ""
+                        )}
+                      >
+                        {example.name}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end">
+                  {/*<div className="flex items-center gap-2">
                   <Switch
                     id="refine"
                     checked={refine}
@@ -158,25 +210,26 @@ export default function Home() {
                   </label>
                 </div>*/}
 
-                <Button
-                  onClick={handleSubmit}
-                  variant={"secondary"}
-                  disabled={loading}
-                >
-                  {loading && <Loader2 className="animate-spin" />}
-                  {loading ? "Generating..." : "Generate Signature"}
-                </Button>
-              </div>
-
-              {error && (
-                <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm">
-                  {error}
+                  <Button
+                    className="flex items-center gap-2 bg-chart-5"
+                    onClick={handleSubmit}
+                    disabled={loading}
+                  >
+                    {loading && <Loader2 className="animate-spin" />}
+                    {loading ? "Generating..." : "Generate Signature"}
+                  </Button>
                 </div>
-              )}
-            </CardContent>
-          </Card>
 
-          {generatedCode && (
+                {error && (
+                  <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm">
+                    {error}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {generatedCode && view === "code" && (
             <Card>
               <CardHeader>
                 <div className="flex items-start justify-between">
@@ -186,12 +239,7 @@ export default function Home() {
                       Your DSPy signature is ready
                     </CardDescription>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleCopy}
-                    className="gap-2"
-                  >
+                  <Button size="sm" onClick={handleCopy} className="gap-2">
                     {copied ? (
                       <>
                         <Check className="h-4 w-4" />
@@ -229,25 +277,19 @@ export default function Home() {
           )}
         </div>
       </div>
-      <div className="w-full h-20 justify-between items-center border-t-2 border-black flex px-16">
-        <div className="font-semibold font-press-start-2p">sgntrs.dev</div>
-        <div className="flex items-center gap-1 font-medium text-gray-600">
+      <div className="w-full min-h-20 justify-between items-center border-t-2 border-black flex flex-wrap gap-4 px-4 sm:px-8 lg:px-16 py-4">
+        <div className="font-semibold font-press-start-2p text-xs sm:text-sm">sgntrs.dev</div>
+        <div className="flex items-center gap-1 sm:gap-2 font-medium text-gray-600">
           <Link href={"https://modaic.dev/"} target="_blank">
-            <Button variant={"link"} className="cursor-pointer text-gray-600">
-              Modaic
-            </Button>
+            <Button className="bg-orange-400 text-xs sm:text-sm px-3 sm:px-4">Modaic</Button>
           </Link>
 
           <Link href={"https://dspy.ai/"} target="_blank">
-            <Button variant={"link"} className="cursor-pointer text-gray-600">
-              DSPy Docs
-            </Button>
+            <Button className="bg-orange-400 text-xs sm:text-sm px-3 sm:px-4">DSPy Docs</Button>
           </Link>
 
           <Link href={"https://discord.gg/5NZ3GZNq5k"} target="_blank">
-            <Button variant={"link"} className="cursor-pointer text-gray-600">
-              Discord
-            </Button>
+            <Button className="bg-orange-400 text-xs sm:text-sm px-3 sm:px-4">Discord</Button>
           </Link>
         </div>
       </div>

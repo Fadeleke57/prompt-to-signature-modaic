@@ -9,10 +9,11 @@ from config import settings
 app = FastAPI()
 
 origins = [
-    "*",
-    settings.client_url,
-    settings.api_url,
-] 
+    "http://localhost:3000",
+    "https://sgntrs.dev",
+    "https://app.sgntrs.dev",
+    "https://www.sgntrs.dev",
+]
 
 app.add_middleware(
     CORSMiddleware,
@@ -26,6 +27,8 @@ class PromptPayload(BaseModel):
     prompt: str
     refine: bool = False
 
+prompt_to_signature_agent = AutoAgent.from_precompiled("fadeleke/prompt-to-signature")
+    
 @app.get("/")
 def read_root():
     return {"Message": "Hello World! FastAPI is working."}
