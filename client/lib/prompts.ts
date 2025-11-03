@@ -21,7 +21,7 @@ const medicalRecordPrompt = ` 1. Medical Record Information Extraction and Clini
   - EMERGENCY: Immediate intervention required, potentially life-threatening presentation
   - CRITICAL: Life-threatening emergency requiring immediate intervention (ICU-level care)
 
-**OUTPUT FORMAT**: Return a structured JSON object with the following schema:
+**OUTPUT FORMAT**: Return the following schema:
 {
   "patient_demographics": {
     "name": "string",
@@ -85,9 +85,7 @@ const medicalRecordPrompt = ` 1. Medical Record Information Extraction and Clini
 }
 `;
 
-const ecomProductReviewPrompt = `## 2. E-commerce Product Review Multi-Dimensional Sentiment Analysis and Feature Extraction
-
-**INPUT FORMAT**: Customer product reviews in natural language text, ranging from 50-1000 words. May include informal language, slang, misspellings, emojis, and mixed sentiments. Reviews may be from various e-commerce platforms (Amazon, eBay, specialized retail sites).
+const ecomProductReviewPrompt = `**INPUT FORMAT**: Customer product reviews in natural language text, ranging from 50-1000 words. May include informal language, slang, misspellings, emojis, and mixed sentiments. Reviews may be from various e-commerce platforms (Amazon, eBay, specialized retail sites).
 
 **TASK DESCRIPTION**: You are an advanced sentiment analysis and feature extraction system for e-commerce platforms. Your goal is to parse customer reviews and extract granular insights about both overall sentiment and feature-specific opinions to help businesses understand customer satisfaction at a detailed level.
 
@@ -110,7 +108,7 @@ const ecomProductReviewPrompt = `## 2. E-commerce Product Review Multi-Dimension
   - 4 = Good (specific, balanced, informative)
   - 5 = Excellent (detailed, comprehensive, fair assessment)
 
-**OUTPUT FORMAT**: Return a structured JSON object:
+**OUTPUT FORMAT**: Return the following schema:
 {
   "overall_sentiment": {
     "classification": "positive|negative|mixed|neutral",
@@ -226,7 +224,7 @@ const legalContractClausePrompt = `3. Legal Contract Clause Classification and C
   - Broad indemnification obligations
   - Asymmetric obligations (one party has significantly more favorable terms)
 
-**OUTPUT FORMAT**: Return a structured JSON object:
+**OUTPUT FORMAT**: Return the following schema:
 {
   "contract_classification": {
     "primary_type": "string",
@@ -337,9 +335,7 @@ const legalContractClausePrompt = `3. Legal Contract Clause Classification and C
   }
 }
 `;
-const newsArticleTopicPrompt = `## 4. News Article Topic Classification, Named Entity Recognition, and Bias Detection
-
-**INPUT FORMAT**: News articles in plain text, typically 300-3000 words, from various news sources including mainstream media, local news, wire services, and online publications. Articles may cover current events, investigative journalism, opinion pieces, or feature stories.
+const newsArticleTopicPrompt = `**INPUT FORMAT**: News articles in plain text, typically 300-3000 words, from various news sources including mainstream media, local news, wire services, and online publications. Articles may cover current events, investigative journalism, opinion pieces, or feature stories.
 
 **TASK DESCRIPTION**: You are a comprehensive news analysis system that categorizes articles, extracts key entities, identifies the article's stance and potential bias, and extracts factual claims for verification. This system helps media monitoring services, researchers, and news aggregation platforms understand and categorize news content.
 
@@ -387,7 +383,7 @@ const newsArticleTopicPrompt = `## 4. News Article Topic Classification, Named E
   - 2 = Poor: Significant sourcing problems, clear bias, lacks balance
   - 1 = Very Poor: Minimal sourcing, heavily biased, potentially misleading
 
-**OUTPUT FORMAT**: Return a structured JSON object:
+**OUTPUT FORMAT**: Return the following schema:
 {
   "topic_classification": {
     "primary_topic": "string",
@@ -456,9 +452,7 @@ const newsArticleTopicPrompt = `## 4. News Article Topic Classification, Named E
   "author": "string or null"
 }
 `;
-const customerSupportTicketPrompt = `## 5. Customer Support Ticket Classification, Intent Detection, and Priority Assignment
-
-**INPUT FORMAT**: Customer support tickets/messages in free-form text, typically 50-500 words. May include informal language, incomplete sentences, multiple issues in one message, emotional content, technical jargon mixed with layman's terms. Can come from email, chat, phone transcripts, or web forms.
+const customerSupportTicketPrompt = `**INPUT FORMAT**: Customer support tickets/messages in free-form text, typically 50-500 words. May include informal language, incomplete sentences, multiple issues in one message, emotional content, technical jargon mixed with layman's terms. Can come from email, chat, phone transcripts, or web forms.
 
 **TASK DESCRIPTION**: You are an intelligent customer support triage system that analyzes incoming support requests to route them appropriately, prioritize urgent issues, extract actionable information, and predict resolution complexity. Your analysis helps support teams respond faster and more effectively.
 
@@ -519,7 +513,7 @@ const customerSupportTicketPrompt = `## 5. Customer Support Ticket Classificatio
   - COMPLEX: Needs technical expertise, multiple teams, or development (30+ minutes or multiple interactions)
   - ESCALATED: Requires senior staff or special handling
 
-**OUTPUT FORMAT**: Return a structured JSON object:
+**OUTPUT FORMAT**: Return the following schema:
 {
   "issue_classification": {
     "primary_category": "string",
@@ -586,9 +580,7 @@ const customerSupportTicketPrompt = `## 5. Customer Support Ticket Classificatio
 }
 `;
 
-const resumeParsingPrompt = `## 6. Resume/CV Parsing, Skills Extraction, and Job Match Scoring
-
-**INPUT FORMAT**: Resume or CV documents in plain text format, typically 300-1500 words. May include various formatting styles, bullet points converted to text, multiple sections (education, experience, skills, certifications), and varying levels of detail. May contain abbreviations, acronyms, and industry-specific terminology.
+const resumeParsingPrompt = `**INPUT FORMAT**: Resume or CV documents in plain text format, typically 300-1500 words. May include various formatting styles, bullet points converted to text, multiple sections (education, experience, skills, certifications), and varying levels of detail. May contain abbreviations, acronyms, and industry-specific terminology.
 
 **TASK DESCRIPTION**: You are an advanced resume parsing and candidate evaluation system used by HR departments and recruiting platforms. Your task is to extract structured information from resumes, identify relevant skills and qualifications, calculate experience levels, and evaluate candidate fit for specific roles. This system helps recruiters quickly assess candidate qualifications and match them to appropriate positions.
 
@@ -665,7 +657,7 @@ If a job description is provided alongside the resume, also include:
 - **Missing Critical Qualifications**: List key requirements not met
 - **Standout Qualifications**: List impressive qualifications that exceed requirements
 
-**OUTPUT FORMAT**: Return a structured JSON object:
+**OUTPUT FORMAT**: Return the following schema:
 {
   "personal_information": {
     "name": "string",
@@ -776,9 +768,7 @@ If a job description is provided alongside the resume, also include:
 }
 `;
 
-const financialDocumentAnalysis = `## 7. Financial Document Analysis: Invoice Processing and Data Extraction
-
-**INPUT FORMAT**: Financial documents (invoices, receipts, purchase orders, bills) in text format extracted from OCR or digital documents. Length varies from 100-1000 words. May include tabular data, line items, tax calculations, terms and conditions. Can have various formats depending on vendor/industry standards.
+const financialDocumentAnalysis = `**INPUT FORMAT**: Financial documents (invoices, receipts, purchase orders, bills) in text format extracted from OCR or digital documents. Length varies from 100-1000 words. May include tabular data, line items, tax calculations, terms and conditions. Can have various formats depending on vendor/industry standards.
 
 **TASK DESCRIPTION**: You are an automated accounts payable and financial document processing system. Your role is to extract structured financial data from invoices and related documents, validate calculations, classify expenses, identify payment terms, and flag anomalies or issues that require human review. This system helps accounting departments automate invoice processing and reduce manual data entry.
 
@@ -881,7 +871,7 @@ const financialDocumentAnalysis = `## 7. Financial Document Analysis: Invoice Pr
   - Payment terms unusually strict or loose
   - Suspicious vendor information (mismatched names/addresses)
 
-**OUTPUT FORMAT**: Return a structured JSON object:
+**OUTPUT FORMAT**: Return the following schema:
 {
   "document_classification": {
     "document_type": "string",
@@ -1001,9 +991,7 @@ const financialDocumentAnalysis = `## 7. Financial Document Analysis: Invoice Pr
 }
 `;
 
-const socialMediaContentModeration = `## 8. Social Media Content Moderation: Multi-Level Classification and Risk Assessment
-
-**INPUT FORMAT**: Social media posts, comments, or messages in plain text format, typically 10-500 words. May include informal language, slang, hashtags, @mentions, emojis, URLs, and multilingual content. Content may be from platforms like Twitter/X, Facebook, Instagram, Reddit, TikTok captions, or YouTube comments.
+const socialMediaContentModeration = `**INPUT FORMAT**: Social media posts, comments, or messages in plain text format, typically 10-500 words. May include informal language, slang, hashtags, @mentions, emojis, URLs, and multilingual content. Content may be from platforms like Twitter/X, Facebook, Instagram, Reddit, TikTok captions, or YouTube comments.
 
 **TASK DESCRIPTION**: You are a comprehensive content moderation system that identifies policy violations, harmful content, spam, and inappropriate material across social media platforms. Your analysis helps platform moderators prioritize review queues, automatically filter content, and protect users from harmful experiences. The system must balance free expression with safety, flag edge cases for human review, and adapt to various cultural contexts.
 
@@ -1071,7 +1059,7 @@ const socialMediaContentModeration = `## 8. Social Media Content Moderation: Mul
 - **ESCALATE_TO_TRUST_SAFETY**: Escalate to specialized team (for CSAM, imminent harm, etc.)
 - **REPORT_TO_AUTHORITIES**: Requires law enforcement notification
 
-**OUTPUT FORMAT**: Return a structured JSON object:
+**OUTPUT FORMAT**: Return the following schema:
 {
   "content_metadata": {
     "content_type": "string",
@@ -1159,9 +1147,7 @@ const socialMediaContentModeration = `## 8. Social Media Content Moderation: Mul
 }
 `;
 
-const academicPaperClassification = `## 9. Academic Paper Classification, Key Information Extraction, and Research Contribution Assessment
-
-**INPUT FORMAT**: Academic paper abstracts or full texts in plain text format, typically 200-10,000 words depending on whether abstract-only or full paper. Content includes scientific/technical language, citations, mathematical notation, methodology descriptions, results, and conclusions. Papers may be from various disciplines (STEM, social sciences, humanities).
+const academicPaperClassification = `**INPUT FORMAT**: Academic paper abstracts or full texts in plain text format, typically 200-10,000 words depending on whether abstract-only or full paper. Content includes scientific/technical language, citations, mathematical notation, methodology descriptions, results, and conclusions. Papers may be from various disciplines (STEM, social sciences, humanities).
 
 **TASK DESCRIPTION**: You are a scholarly document analysis system used by academic databases, research institutions, and literature review tools. Your task is to classify papers by discipline and methodology, extract key research elements, assess novelty and impact, identify relationships to prior work, and help researchers quickly understand a paper's contribution to the field.
 
@@ -1256,7 +1242,7 @@ const academicPaperClassification = `## 9. Academic Paper Classification, Key In
 - LOW: Vague methods, insufficient detail, no materials shared
 - CANNOT_ASSESS: Insufficient information
 
-**OUTPUT FORMAT**: Return a structured JSON object:
+**OUTPUT FORMAT**: Return the following schema:
 {
   "bibliographic_information": {
     "title": "string",
@@ -1355,9 +1341,7 @@ const academicPaperClassification = `## 9. Academic Paper Classification, Key In
 }
 `;
 
-const voiceOfCustomerAnalysis = `## 10. Voice of Customer (VoC) Analysis: Multi-Source Feedback Aggregation and Insight Extraction
-
-**INPUT FORMAT**: Customer feedback text from multiple sources including survey responses, social media mentions, customer support transcripts, online reviews, focus group transcripts, user interviews, and feedback forms. Text length varies from single sentences to multi-paragraph responses (10-2000 words). May contain mixed sentiment, multiple topics, specific product/feature mentions, and emotional language.
+const voiceOfCustomerAnalysis = `**INPUT FORMAT**: Customer feedback text from multiple sources including survey responses, social media mentions, customer support transcripts, online reviews, focus group transcripts, user interviews, and feedback forms. Text length varies from single sentences to multi-paragraph responses (10-2000 words). May contain mixed sentiment, multiple topics, specific product/feature mentions, and emotional language.
 
 **TASK DESCRIPTION**: You are an advanced Voice of Customer analytics system that processes diverse feedback sources to extract actionable insights for product, marketing, and customer experience teams. Your analysis identifies patterns, prioritizes issues, uncovers opportunities, tracks sentiment trends, and links feedback to specific product features or customer journey stages. This system helps organizations transform unstructured feedback into strategic decisions.
 
@@ -1466,7 +1450,7 @@ const voiceOfCustomerAnalysis = `## 10. Voice of Customer (VoC) Analysis: Multi-
 - Increased usage intent
 - Referral willingness
 
-**OUTPUT FORMAT**: Return a structured JSON object:
+**OUTPUT FORMAT**: Return the following schema:
 {
   "feedback_metadata": {
     "source_type": "string",
