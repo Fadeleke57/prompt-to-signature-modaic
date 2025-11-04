@@ -1,578 +1,144 @@
-const medicalRecordPrompt = `**INPUT FORMAT**: Raw clinical notes in free-text format, typically 200-2000 words, containing unstructured medical documentation from patient encounters including history, examination findings, diagnoses, treatment plans, and follow-up instructions.
+const medicalRecordPrompt = `Extract structured data from clinical notes and classify urgency.
 
-**TASK DESCRIPTION**: You are a medical information extraction system. Analyze the provided clinical notes and perform comprehensive structured data extraction along with risk stratification. Your task involves multiple sub-tasks executed simultaneously.
+**INPUT**: Clinical notes (200-2000 words) with patient history, findings, diagnoses, and treatment plans.
 
-**EXTRACTION REQUIREMENTS**:
-- **Patient Demographics**: Extract full legal name, age (in years), biological sex/gender, date of birth (format: YYYY-MM-DD), medical record number (MRN) if present
-- **Primary Diagnosis**: Identify the main diagnosis with corresponding ICD-10 code, include diagnostic certainty level (confirmed/suspected/rule-out)
-- **Secondary Diagnoses**: List all comorbidities and additional conditions mentioned, each with ICD-10 codes where applicable
-- **Medications**: Extract complete medication list including generic and brand names, dosages with units (mg, mcg, mL), frequency (BID, TID, QID, PRN), route of administration (PO, IV, IM, topical), and duration if specified
-- **Allergies**: Document all allergies with allergen name, reaction type (rash, anaphylaxis, nausea, etc.), and severity classification (mild/moderate/severe/life-threatening)
-- **Vital Signs**: Extract most recent measurements - blood pressure (systolic/diastolic in mmHg), heart rate (bpm), temperature (°F or °C with unit), respiratory rate (breaths/min), oxygen saturation (%), and pain score (0-10 scale)
-- **Laboratory Results**: Identify all lab values mentioned with test name, numerical result, unit of measurement, reference range, and flag if abnormal (high/low/critical)
-- **Appointments**: Extract scheduled follow-up dates, appointment types (follow-up, specialist referral, procedure), and provider names
+**EXTRACT**:
+- Patient: name, age, gender, DOB, MRN
+- Diagnoses: primary with ICD-10 code and certainty level; secondary conditions
+- Medications: name, dosage, frequency, route
+- Allergies: allergen, reaction, severity
+- Vitals: BP, HR, temp, RR, O2 sat, pain
+- Labs: test name, value, unit, range, flag
+- Appointments: date, type, provider
 
-**CLASSIFICATION REQUIREMENTS**:
-- **Urgency Level**: Classify the case into one of four categories:
-  - ROUTINE: Stable patient, chronic condition management, no acute concerns
-  - URGENT: Requires attention within 24-48 hours, acute but not life-threatening condition
-  - EMERGENCY: Immediate intervention required, potentially life-threatening presentation
-  - CRITICAL: Life-threatening emergency requiring immediate intervention (ICU-level care)
+**CLASSIFY**: Urgency as ROUTINE, URGENT, EMERGENCY, or CRITICAL
 
-**OUTPUT FORMAT**: Return the following schema:
+**OUTPUT**:
 {
-  "patient_demographics": {
-    "name": "string",
-    "age": "integer",
-    "gender": "string",
-    "dob": "YYYY-MM-DD",
-    "mrn": "string or null"
-  },
-  "primary_diagnosis": {
-    "condition": "string",
-    "icd10_code": "string",
-    "certainty": "confirmed|suspected|rule-out"
-  },
-  "secondary_diagnoses": [
-    {"condition": "string", "icd10_code": "string"}
-  ],
-  "medications": [
-    {
-      "name": "string",
-      "dosage": "string",
-      "frequency": "string",
-      "route": "string",
-      "duration": "string or null"
-    }
-  ],
-  "allergies": [
-    {
-      "allergen": "string",
-      "reaction": "string",
-      "severity": "mild|moderate|severe|life-threatening"
-    }
-  ],
-  "vital_signs": {
-    "blood_pressure": "string (systolic/diastolic)",
-    "heart_rate": "integer",
-    "temperature": "float with unit",
-    "respiratory_rate": "integer",
-    "oxygen_saturation": "integer",
-    "pain_score": "integer (0-10)"
-  },
-  "lab_results": [
-    {
-      "test_name": "string",
-      "value": "float",
-      "unit": "string",
-      "reference_range": "string",
-      "flag": "normal|high|low|critical"
-    }
-  ],
-  "appointments": [
-    {
-      "date": "YYYY-MM-DD",
-      "type": "string",
-      "provider": "string"
-    }
-  ],
-  "urgency_classification": {
-    "level": "ROUTINE|URGENT|EMERGENCY|CRITICAL",
-    "reasoning": "string (brief explanation for classification)"
-  }
+  "patient": {"name": "str", "age": "int", "gender": "str", "dob": "YYYY-MM-DD", "mrn": "str?"},
+  "primary_diagnosis": {"condition": "str", "icd10": "str", "certainty": "confirmed|suspected|rule-out"},
+  "medications": [{"name": "str", "dosage": "str", "frequency": "str"}],
+  "allergies": [{"allergen": "str", "reaction": "str", "severity": "mild|moderate|severe"}],
+  "vitals": {"bp": "str", "hr": "int", "temp": "str"},
+  "urgency": {"level": "ROUTINE|URGENT|EMERGENCY|CRITICAL", "reasoning": "str"}
 }
 `;
 
-const ecomProductReviewPrompt = `**INPUT FORMAT**: Customer product reviews in natural language text, ranging from 50-1000 words. May include informal language, slang, misspellings, emojis, and mixed sentiments. Reviews may be from various e-commerce platforms (Amazon, eBay, specialized retail sites).
+const ecomProductReviewPrompt = `Analyze product reviews for sentiment, features, and helpfulness.
 
-**TASK DESCRIPTION**: You are an advanced sentiment analysis and feature extraction system for e-commerce platforms. Your goal is to parse customer reviews and extract granular insights about both overall sentiment and feature-specific opinions to help businesses understand customer satisfaction at a detailed level.
+**INPUT**: Customer reviews (50-1000 words) with informal language, emojis, and mixed sentiments.
 
-**EXTRACTION REQUIREMENTS**:
-- **Overall Sentiment**: Determine the general sentiment of the entire review using a 4-category classification (positive/negative/mixed/neutral). Mixed indicates both positive and negative sentiments present; neutral indicates factual statements without emotional valence.
-- **Product Features Mentioned**: Identify which of these standard e-commerce features are discussed: product quality, value for money, delivery/shipping experience, customer service interactions, packaging quality, product description accuracy, ease of use, durability, aesthetics/appearance, size/fit accuracy
-- **Feature-Specific Sentiment**: For each feature mentioned, assign a sentiment score (-2 very negative, -1 negative, 0 neutral, +1 positive, +2 very positive)
-- **Star Rating Prediction**: Based on the text sentiment and feature analysis, predict what star rating (1-5 stars) the customer likely gave, with confidence score (0-100%)
-- **Purchase Verification**: Detect phrases indicating verified purchase ("verified purchase", "bought this", "received this product", "purchased from") vs. uncertain authenticity
-- **Competitor Comparison**: Identify if the review compares the product to competitors, extract competitor names/products mentioned, and determine if comparison is favorable or unfavorable
-- **Specific Issues**: Extract concrete complaints (e.g., "broke after 2 weeks", "arrived damaged", "wrong color sent", "missing parts")
-- **Specific Praise**: Extract concrete positive mentions (e.g., "excellent battery life", "fast shipping", "exceeded expectations")
-- **Review Helpfulness Indicators**: Classify review as "likely helpful" or "not helpful" based on linguistic markers (specificity, length, balanced perspective, constructive criticism vs. pure emotion)
+**EXTRACT**:
+- Overall sentiment: positive/negative/mixed/neutral with confidence
+- Features mentioned: quality, value, delivery, service, packaging, accuracy, usability
+- Feature-specific sentiment: -2 to +2 scale per feature
+- Star rating prediction (1-5) with confidence
+- Purchase verification indicators
+- Competitor comparisons with favorability
+- Specific issues and praise with quotes
 
-**CLASSIFICATION REQUIREMENTS**:
-- **Review Quality Score**: Rate the review quality from 1-5 where:
-  - 1 = Unhelpful (pure emotion, no details, spam-like)
-  - 2 = Minimal info (very brief, vague)
-  - 3 = Moderate (some useful details)
-  - 4 = Good (specific, balanced, informative)
-  - 5 = Excellent (detailed, comprehensive, fair assessment)
+**CLASSIFY**: Review quality (1-5) and helpfulness (helpful/not helpful)
 
-**OUTPUT FORMAT**: Return the following schema:
+**OUTPUT**:
 {
-  "overall_sentiment": {
-    "classification": "positive|negative|mixed|neutral",
-    "confidence_score": "float (0-1)"
-  },
-  "predicted_star_rating": {
-    "stars": "integer (1-5)",
-    "confidence": "integer (0-100)"
-  },
-  "features_analyzed": [
-    {
-      "feature_name": "string",
-      "mentioned": "boolean",
-      "sentiment_score": "integer (-2 to +2)",
-      "supporting_quote": "string (relevant excerpt from review)"
-    }
-  ],
-  "purchase_verification": {
-    "appears_verified": "boolean",
-    "indicators": ["array of strings showing evidence"]
-  },
-  "competitor_comparison": {
-    "present": "boolean",
-    "competitors_mentioned": ["array of strings"],
-    "comparison_favorability": "favorable|unfavorable|neutral"
-  },
-  "specific_issues": [
-    {
-      "issue": "string",
-      "severity": "minor|moderate|major",
-      "quote": "string"
-    }
-  ],
-  "specific_praise": [
-    {
-      "praise_point": "string",
-      "quote": "string"
-    }
-  ],
-  "review_helpfulness": {
-    "classification": "likely_helpful|not_helpful",
-    "quality_score": "integer (1-5)",
-    "reasoning": "string"
-  }
+  "sentiment": {"type": "positive|negative|mixed|neutral", "confidence": "float"},
+  "predicted_stars": {"rating": "int (1-5)", "confidence": "int (0-100)"},
+  "features": [{"feature": "str", "sentiment": "int (-2 to +2)", "quote": "str"}],
+  "verified_purchase": "bool",
+  "competitor_comparison": {"present": "bool", "favorability": "favorable|unfavorable|neutral"},
+  "issues": [{"issue": "str", "severity": "minor|moderate|major"}],
+  "quality_score": "int (1-5)"
 }
 `;
 
-const legalContractClausePrompt = `**INPUT FORMAT**: Legal contract documents in plain text format, typically 1,000-10,000 words. Documents may include standard contract sections like recitals, definitions, terms and conditions, warranties, liability limitations, termination clauses, and signature blocks. Text may contain legal jargon, defined terms in capitals, and cross-references.
+const legalContractClausePrompt = `Extract key terms from legal contracts and assess risk.
 
-**TASK DESCRIPTION**: You are a legal document analysis system designed to parse contracts and extract key business terms, classify contract types, identify critical clauses, and flag potential risks. This system helps legal teams quickly review contracts and identify important provisions.
+**INPUT**: Legal contracts (1,000-10,000 words) including terms, warranties, liability, and termination clauses.
 
-**EXTRACTION REQUIREMENTS**:
-- **Contract Type**: Classify into primary categories (Non-Disclosure Agreement, Employment Agreement, Service Agreement, Master Services Agreement, Purchase Agreement, Lease Agreement, Licensing Agreement, Partnership Agreement, Consulting Agreement, Vendor Agreement, Sales Agreement, Franchise Agreement, Settlement Agreement, or Other with specification)
-- **Parties Information**: Extract all contracting parties with:
-  - Legal entity names (full formal names as written)
-  - Entity types (Corporation, LLC, Individual, Partnership, Government Entity, Non-Profit)
-  - Jurisdiction of incorporation/registration
-  - Role in contract (Provider/Client, Employer/Employee, Licensor/Licensee, Landlord/Tenant, etc.)
-  - Addresses and contact information if present
-- **Critical Dates**: Extract:
-  - Effective date (when contract becomes binding)
-  - Execution date (when signed)
-  - Commencement date (when performance begins)
-  - Expiration/termination date
-  - Renewal dates and auto-renewal provisions
-  - Notice period requirements (days/months required for termination notice)
-- **Financial Terms**: Extract all monetary provisions:
-  - Payment amounts with currency
-  - Payment schedule (one-time, monthly, quarterly, milestone-based)
-  - Late payment penalties and interest rates
-  - Deposit/retainer amounts
-  - Expense reimbursement provisions
-  - Price escalation clauses
-- **Liability and Indemnification**: Extract:
-  - Liability cap amounts (monetary limits)
-  - Types of damages excluded (consequential, indirect, punitive)
-  - Indemnification obligations (who indemnifies whom for what)
-  - Insurance requirements (types and minimum coverage amounts)
-- **Confidentiality Provisions**: Extract:
-  - Duration of confidentiality obligations (years)
-  - Definition scope of confidential information
-  - Exclusions from confidentiality
-  - Return/destruction obligations
-- **Intellectual Property**: Extract:
-  - IP ownership provisions (who owns what work product)
-  - License grants (exclusive/non-exclusive, territory, duration)
-  - Restrictions on use
-- **Termination Provisions**: Extract:
-  - Termination for convenience (allowed/not allowed, notice period)
-  - Termination for cause (breach conditions)
-  - Consequences of termination (payment obligations, IP ownership post-termination)
-- **Governing Law and Dispute Resolution**: Extract:
-  - Jurisdiction/governing law (state/country)
-  - Dispute resolution mechanism (litigation, arbitration, mediation)
-  - Venue for disputes
-  - Attorney's fees provisions
-- **Non-Compete and Restrictive Covenants**: Extract:
-  - Non-compete duration and geographic scope
-  - Non-solicitation provisions (customers, employees)
-  - Duration of restrictions
+**EXTRACT**:
+- Contract type: NDA, employment, service, purchase, lease, licensing, etc.
+- Parties: names, entity types, jurisdictions, roles
+- Dates: effective, execution, expiration, renewal terms
+- Financial: payment amounts, schedule, penalties
+- Liability: caps, excluded damages, indemnification, insurance
+- Confidentiality: duration, scope, exclusions
+- IP: ownership and license grants
+- Termination: for convenience/cause, notice periods
+- Governing law: jurisdiction, dispute resolution
+- Restrictive covenants: non-compete, non-solicitation
 
-**CLASSIFICATION REQUIREMENTS**:
-- **Risk Level Assessment**: Classify contract risk as:
-  - LOW: Standard terms, balanced obligations, reasonable limitations
-  - MEDIUM: Some unfavorable terms but manageable, industry-standard provisions
-  - HIGH: Significantly unfavorable terms, unlimited liability, very restrictive covenants, or missing critical protections
-- **Flagged Clauses**: Identify concerning provisions:
-  - Unlimited liability exposure
-  - Very long non-compete periods (>2 years)
-  - Automatic renewal without clear opt-out
-  - Broad indemnification obligations
-  - Asymmetric obligations (one party has significantly more favorable terms)
+**CLASSIFY**: Risk level (LOW/MEDIUM/HIGH) and flag concerning clauses
 
-**OUTPUT FORMAT**: Return the following schema:
+**OUTPUT**:
 {
-  "contract_classification": {
-    "primary_type": "string",
-    "sub_type": "string or null",
-    "confidence": "float (0-1)"
-  },
-  "parties": [
-    {
-      "legal_name": "string",
-      "entity_type": "string",
-      "jurisdiction": "string or null",
-      "role": "string",
-      "address": "string or null"
-    }
-  ],
-  "critical_dates": {
-    "effective_date": "YYYY-MM-DD or null",
-    "execution_date": "YYYY-MM-DD or null",
-    "commencement_date": "YYYY-MM-DD or null",
-    "expiration_date": "YYYY-MM-DD or null",
-    "renewal_terms": "string or null",
-    "notice_period_days": "integer or null"
-  },
-  "financial_terms": {
-    "total_contract_value": "string or null",
-    "payment_schedule": [
-      {
-        "amount": "string",
-        "currency": "string",
-        "frequency": "string",
-        "due_date": "string or null"
-      }
-    ],
-    "late_payment_penalty": "string or null",
-    "deposits": "string or null"
-  },
-  "liability_provisions": {
-    "liability_cap": "string or null",
-    "cap_amount": "string or null",
-    "excluded_damages": ["array of strings"],
-    "indemnification": {
-      "indemnifying_party": "string",
-      "scope": "string",
-      "limitations": "string or null"
-    },
-    "insurance_requirements": ["array of strings"]
-  },
-  "confidentiality": {
-    "duration_years": "integer or null",
-    "duration_description": "string",
-    "scope_summary": "string",
-    "exclusions": ["array of strings"]
-  },
-  "intellectual_property": {
-    "ownership": "string (summary of who owns what)",
-    "license_grants": [
-      {
-        "licensor": "string",
-        "licensee": "string",
-        "scope": "string",
-        "exclusivity": "exclusive|non-exclusive",
-        "territory": "string or null",
-        "duration": "string or null"
-      }
-    ]
-  },
-  "termination_provisions": {
-    "termination_for_convenience": {
-      "allowed": "boolean",
-      "notice_period": "string or null",
-      "party_rights": "string"
-    },
-    "termination_for_cause": {
-      "conditions": ["array of strings"],
-      "cure_period": "string or null"
-    },
-    "post_termination_obligations": ["array of strings"]
-  },
-  "governing_law": {
-    "jurisdiction": "string",
-    "dispute_resolution": "litigation|arbitration|mediation",
-    "venue": "string or null",
-    "attorneys_fees": "string or null"
-  },
-  "restrictive_covenants": {
-    "non_compete": {
-      "present": "boolean",
-      "duration": "string or null",
-      "geographic_scope": "string or null"
-    },
-    "non_solicitation": {
-      "present": "boolean",
-      "scope": "string or null",
-      "duration": "string or null"
-    }
-  },
-  "risk_assessment": {
-    "overall_risk_level": "LOW|MEDIUM|HIGH",
-    "flagged_clauses": [
-      {
-        "clause_type": "string",
-        "concern": "string",
-        "severity": "low|medium|high",
-        "recommendation": "string"
-      }
-    ],
-    "missing_protections": ["array of strings"]
-  }
+  "type": {"primary": "str", "confidence": "float"},
+  "parties": [{"name": "str", "entity_type": "str", "role": "str"}],
+  "dates": {"effective": "YYYY-MM-DD", "expiration": "YYYY-MM-DD", "notice_days": "int"},
+  "financial": {"total_value": "str", "payment_schedule": "str"},
+  "liability": {"cap": "str", "indemnification": "str"},
+  "confidentiality": {"duration_years": "int", "scope": "str"},
+  "termination": {"for_convenience": "bool", "notice_period": "str"},
+  "risk": {"level": "LOW|MEDIUM|HIGH", "flagged_clauses": [{"type": "str", "concern": "str"}]}
 }
 `;
-const newsArticleTopicPrompt = `**INPUT FORMAT**: News articles in plain text, typically 300-3000 words, from various news sources including mainstream media, local news, wire services, and online publications. Articles may cover current events, investigative journalism, opinion pieces, or feature stories.
+const newsArticleTopicPrompt = `Categorize news articles, extract entities, and assess credibility.
 
-**TASK DESCRIPTION**: You are a comprehensive news analysis system that categorizes articles, extracts key entities, identifies the article's stance and potential bias, and extracts factual claims for verification. This system helps media monitoring services, researchers, and news aggregation platforms understand and categorize news content.
+**INPUT**: News articles (300-3000 words) from various sources and formats.
 
-**EXTRACTION REQUIREMENTS**:
-- **Primary Topic Classification**: Classify into main category (Politics, Business/Finance, Technology, Science, Health/Medicine, Environment, Sports, Entertainment, Crime/Justice, International Relations, Education, Social Issues, Military/Defense, Disaster/Emergency, Human Interest, Other)
-- **Secondary Topics**: List up to 3 additional relevant topics/subtopics
-- **Geographic Focus**: Extract primary location/region the article focuses on (Country, State/Province, City, or "Global")
-- **Named Entities**: Extract all significant entities with categorization:
-  - PERSON: Full names with roles/titles (politicians, CEOs, celebrities, experts, victims, etc.)
-  - ORGANIZATION: Companies, government agencies, NGOs, political parties, institutions
-  - LOCATION: Countries, cities, regions, landmarks, addresses
-  - EVENT: Named events (elections, conferences, disasters, protests, ceremonies)
-  - MONETARY: Specific dollar amounts, financial figures, budgets
-  - DATE: Specific dates and time periods mentioned
-  - LEGISLATION: Bills, laws, policies, regulations mentioned by name
-- **Key Claims**: Extract 3-5 main factual claims that could be fact-checked, with:
-  - The claim statement
-  - Who made the claim (source attribution)
-  - Whether evidence/citation is provided in the article
-- **Article Stance**: Determine the article's overall position on the main subject:
-  - SUPPORTIVE: Generally favorable toward the subject
-  - CRITICAL: Generally unfavorable toward the subject
-  - BALANCED: Presents multiple perspectives fairly
-  - NEUTRAL/FACTUAL: Purely informational without clear stance
-  - ADVOCACY: Explicitly argues for a position or action
-- **Bias Indicators**: Identify potential bias markers:
-  - Loaded language (emotionally charged words)
-  - One-sided sourcing (only quotes supporting one perspective)
-  - Omission of counterarguments or alternative viewpoints
-  - Headline-content mismatch (sensationalized headline)
-  - Lack of attribution for claims
-  - Use of absolutes ("always", "never", "all", "none")
-- **Source Quality**: Extract and evaluate sources cited:
-  - Named sources with credentials
-  - Anonymous sources
-  - Primary sources vs. secondary sources
-  - Expert sources vs. partisan sources
-- **Article Type**: Classify as News Report, Opinion/Editorial, Analysis/Explainer, Investigative Report, Feature Story, Press Release, Interview, Live Coverage/Breaking News
+**EXTRACT**:
+- Topics: primary and secondary (politics, business, tech, health, etc.)
+- Geographic focus: country, state, city, or global
+- Named entities: persons, organizations, locations, events, monetary values, dates
+- Key claims: 3-5 factual claims with attribution and verifiability
+- Sources: named, anonymous, expert, primary/secondary
+- Article type: news report, opinion, analysis, investigative, feature
 
-**CLASSIFICATION REQUIREMENTS**:
-- **Credibility Score**: Rate article credibility (1-5):
-  - 5 = Excellent: Multiple credible sources, balanced, well-attributed, clear fact/opinion separation
-  - 4 = Good: Adequately sourced, mostly balanced, minor issues
-  - 3 = Fair: Some sourcing issues, some bias, acceptable for news
-  - 2 = Poor: Significant sourcing problems, clear bias, lacks balance
-  - 1 = Very Poor: Minimal sourcing, heavily biased, potentially misleading
+**CLASSIFY**:
+- Stance: supportive, critical, balanced, neutral, advocacy
+- Bias indicators: loaded language, one-sided sourcing, omissions
+- Credibility score (1-5)
 
-**OUTPUT FORMAT**: Return the following schema:
+**OUTPUT**:
 {
-  "topic_classification": {
-    "primary_topic": "string",
-    "secondary_topics": ["array of strings"],
-    "confidence": "float (0-1)"
-  },
-  "geographic_focus": {
-    "primary_location": "string",
-    "additional_locations": ["array of strings"]
-  },
-  "named_entities": {
-    "persons": [
-      {
-        "name": "string",
-        "role_title": "string or null",
-        "relevance": "primary|secondary"
-      }
-    ],
-    "organizations": ["array of strings"],
-    "locations": ["array of strings"],
-    "events": ["array of strings"],
-    "monetary_values": ["array of strings"],
-    "dates": ["array of strings"],
-    "legislation": ["array of strings"]
-  },
-  "key_claims": [
-    {
-      "claim": "string",
-      "source_attribution": "string",
-      "evidence_provided": "boolean",
-      "verifiability": "easily_verifiable|requires_investigation|unverifiable"
-    }
-  ],
-  "article_stance": {
-    "classification": "SUPPORTIVE|CRITICAL|BALANCED|NEUTRAL|ADVOCACY",
-    "confidence": "float (0-1)",
-    "explanation": "string"
-  },
-  "bias_indicators": {
-    "bias_detected": "boolean",
-    "indicators_found": [
-      {
-        "type": "string",
-        "examples": ["array of strings with specific quotes or instances"],
-        "severity": "minor|moderate|significant"
-      }
-    ],
-    "overall_bias_assessment": "minimal|moderate|substantial"
-  },
-  "source_quality": {
-    "named_sources_count": "integer",
-    "anonymous_sources_count": "integer",
-    "expert_sources": ["array of strings"],
-    "source_diversity": "strong|moderate|weak",
-    "primary_sources_used": "boolean"
-  },
-  "article_type": "string",
-  "credibility_score": {
-    "score": "integer (1-5)",
-    "reasoning": "string",
-    "strengths": ["array of strings"],
-    "weaknesses": ["array of strings"]
-  },
-  "publication_date": "YYYY-MM-DD or null",
-  "headline": "string",
-  "author": "string or null"
+  "topics": {"primary": "str", "secondary": ["str"]},
+  "location": "str",
+  "entities": {"persons": [{"name": "str", "role": "str"}], "organizations": ["str"], "events": ["str"]},
+  "claims": [{"claim": "str", "source": "str", "verifiability": "easily|investigation|unverifiable"}],
+  "stance": {"type": "SUPPORTIVE|CRITICAL|BALANCED|NEUTRAL|ADVOCACY", "explanation": "str"},
+  "bias": {"detected": "bool", "assessment": "minimal|moderate|substantial"},
+  "article_type": "str",
+  "credibility": {"score": "int (1-5)", "reasoning": "str"}
 }
 `;
-const customerSupportTicketPrompt = `**INPUT FORMAT**: Customer support tickets/messages in free-form text, typically 50-500 words. May include informal language, incomplete sentences, multiple issues in one message, emotional content, technical jargon mixed with layman's terms. Can come from email, chat, phone transcripts, or web forms.
+const customerSupportTicketPrompt = `Triage support tickets for routing, prioritization, and resolution.
 
-**TASK DESCRIPTION**: You are an intelligent customer support triage system that analyzes incoming support requests to route them appropriately, prioritize urgent issues, extract actionable information, and predict resolution complexity. Your analysis helps support teams respond faster and more effectively.
+**INPUT**: Support tickets (50-500 words) with informal language and mixed issues.
 
-**EXTRACTION REQUIREMENTS**:
-- **Primary Issue Category**: Classify into main category (Technical Issue, Billing/Payment, Account Access, Product Question, Feature Request, Complaint, Refund/Return, Shipping/Delivery, Installation/Setup, Security Concern, Data/Privacy Question, Bug Report, General Inquiry, Cancellation Request, Upgrade/Downgrade)
-- **Secondary Issues**: Identify any additional issues mentioned (customers often include multiple concerns)
-- **Customer Intent**: Determine what the customer wants:
-  - INFORMATION: Seeking information/clarification
-  - RESOLUTION: Problem needs to be fixed
-  - ACTION: Specific action required (refund, cancellation, access, etc.)
-  - FEEDBACK: Providing feedback or suggestions
-  - COMPLAINT: Expressing dissatisfaction
-  - ESCALATION: Requesting to speak with supervisor/manager
-- **Product/Service Identification**: Extract specific products, services, features, or order numbers mentioned
-- **Technical Details**: For technical issues, extract:
-  - Error messages or error codes
-  - Device/platform information (OS, browser, app version)
-  - Steps to reproduce the problem
-  - When issue started occurring
-- **Account Information**: Extract (when mentioned):
-  - Account ID, username, email, or order number
-  - Subscription/plan type
-  - Account age indicators (new customer vs. long-time customer)
-- **Temporal Urgency**: Identify time-sensitive indicators:
-  - Explicit deadlines ("need this by Friday")
-  - Time-based problems ("been waiting for 3 weeks")
-  - Service outage duration ("down for 2 hours")
-- **Sentiment Analysis**: Assess customer emotional state:
-  - SATISFIED: Happy, grateful, positive
-  - NEUTRAL: Factual, calm inquiry
-  - FRUSTRATED: Annoyed but controlled
-  - ANGRY: Upset, demanding, using strong language
-  - DESPERATE: Urgent, pleading, stressed
-- **Customer Effort**: Identify what customer has already tried:
-  - Self-help attempts (checked FAQ, tried troubleshooting)
-  - Previous contact attempts (prior tickets, call history references)
-  - Workarounds attempted
-- **Resolution Indicators**: Extract customer's stated desired outcome
+**EXTRACT**:
+- Issue category: technical, billing, account, product, feature request, complaint, etc.
+- Customer intent: information, resolution, action, feedback, escalation
+- Products/services mentioned and order numbers
+- Technical details: error messages, platform, device, reproduction steps
+- Temporal urgency: deadlines, issue duration
+- Customer effort: self-help attempts, previous contacts
+- Desired outcome
 
-**CLASSIFICATION REQUIREMENTS**:
-- **Priority Level**: Assign ticket priority:
-  - CRITICAL (P1): Service completely down, security breach, data loss, payment failures affecting business, legal/regulatory issue
-  - HIGH (P2): Major functionality broken, significant financial impact, angry customer escalation, time-sensitive deadline
-  - MEDIUM (P3): Partial functionality issue, moderate inconvenience, standard complaints, non-urgent billing questions
-  - LOW (P4): Minor issues, general questions, feature requests, feedback
-- **Routing Recommendation**: Suggest which team should handle:
-  - Technical Support (Tier 1/2/3)
-  - Billing Department
-  - Account Management
-  - Product Team
-  - Security Team
-  - Executive Escalation
-  - Sales Team
-- **SLA Deadline**: Calculate response deadline based on priority and business hours
-- **Complexity Assessment**: Predict resolution difficulty:
-  - SIMPLE: FAQ-level, can be resolved with standard response (< 5 minutes)
-  - MODERATE: Requires investigation or account-specific action (5-30 minutes)
-  - COMPLEX: Needs technical expertise, multiple teams, or development (30+ minutes or multiple interactions)
-  - ESCALATED: Requires senior staff or special handling
+**CLASSIFY**:
+- Sentiment: satisfied, neutral, frustrated, angry, desperate
+- Priority: CRITICAL (P1), HIGH (P2), MEDIUM (P3), LOW (P4)
+- Routing: technical support, billing, account management, product team
+- Complexity: simple, moderate, complex, escalated
 
-**OUTPUT FORMAT**: Return the following schema:
+**OUTPUT**:
 {
-  "issue_classification": {
-    "primary_category": "string",
-    "secondary_categories": ["array of strings"],
-    "confidence": "float (0-1)"
-  },
-  "customer_intent": {
-    "primary_intent": "INFORMATION|RESOLUTION|ACTION|FEEDBACK|COMPLAINT|ESCALATION",
-    "specific_request": "string (what customer wants in one sentence)"
-  },
-  "extracted_details": {
-    "products_mentioned": ["array of strings"],
-    "order_numbers": ["array of strings"],
-    "account_identifiers": ["array of strings"],
-    "error_messages": ["array of strings"],
-    "technical_details": {
-      "platform": "string or null",
-      "device": "string or null",
-      "browser": "string or null",
-      "app_version": "string or null",
-      "reproduction_steps": "string or null"
-    }
-  },
-  "temporal_context": {
-    "explicit_deadline": "YYYY-MM-DD or null",
-    "issue_duration": "string or null",
-    "time_sensitivity": "immediate|urgent|normal|flexible"
-  },
-  "sentiment_analysis": {
-    "emotional_state": "SATISFIED|NEUTRAL|FRUSTRATED|ANGRY|DESPERATE",
-    "sentiment_score": "float (-1 to 1, where -1 is very negative, 1 is very positive)",
-    "key_emotional_indicators": ["array of strings with supporting phrases"]
-  },
-  "customer_effort": {
-    "self_help_attempted": "boolean",
-    "attempts_described": ["array of strings"],
-    "previous_contacts": "boolean",
-    "escalation_history": "string or null"
-  },
-  "desired_outcome": "string",
-  "priority_assignment": {
-    "priority_level": "CRITICAL|HIGH|MEDIUM|LOW",
-    "reasoning": "string",
-    "escalation_recommended": "boolean"
-  },
-  "routing_recommendation": {
-    "primary_team": "string",
-    "secondary_teams": ["array of strings"],
-    "requires_specialist": "boolean",
-    "specialist_type": "string or null"
-  },
-  "sla_deadline": {
-    "first_response_due": "datetime (ISO format)",
-    "resolution_target": "datetime (ISO format)"
-  },
-  "complexity_assessment": {
-    "complexity_level": "SIMPLE|MODERATE|COMPLEX|ESCALATED",
-    "estimated_resolution_time": "string",
-    "requires_multiple_interactions": "boolean",
-    "potential_blockers": ["array of strings"]
-  },
-  "suggested_actions": ["array of strings with immediate action items"],
-  "knowledge_base_articles": ["array of strings with relevant KB article IDs or titles"]
+  "issue": {"category": "str", "subcategories": ["str"]},
+  "intent": {"type": "INFORMATION|RESOLUTION|ACTION|FEEDBACK|ESCALATION", "request": "str"},
+  "details": {"products": ["str"], "errors": ["str"], "platform": "str"},
+  "urgency": {"deadline": "YYYY-MM-DD", "time_sensitivity": "immediate|urgent|normal"},
+  "sentiment": {"state": "SATISFIED|NEUTRAL|FRUSTRATED|ANGRY|DESPERATE", "score": "float (-1 to 1)"},
+  "priority": {"level": "CRITICAL|HIGH|MEDIUM|LOW", "reasoning": "str"},
+  "routing": {"team": "str", "requires_specialist": "bool"},
+  "complexity": {"level": "SIMPLE|MODERATE|COMPLEX|ESCALATED", "est_time": "str"}
 }
 `;
 
