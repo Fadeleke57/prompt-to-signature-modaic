@@ -1,6 +1,4 @@
-const medicalRecordPrompt = ` 1. Medical Record Information Extraction and Clinical Priority Classification
-
-**INPUT FORMAT**: Raw clinical notes in free-text format, typically 200-2000 words, containing unstructured medical documentation from patient encounters including history, examination findings, diagnoses, treatment plans, and follow-up instructions.
+const medicalRecordPrompt = `**INPUT FORMAT**: Raw clinical notes in free-text format, typically 200-2000 words, containing unstructured medical documentation from patient encounters including history, examination findings, diagnoses, treatment plans, and follow-up instructions.
 
 **TASK DESCRIPTION**: You are a medical information extraction system. Analyze the provided clinical notes and perform comprehensive structured data extraction along with risk stratification. Your task involves multiple sub-tasks executed simultaneously.
 
@@ -156,9 +154,7 @@ const ecomProductReviewPrompt = `**INPUT FORMAT**: Customer product reviews in n
 }
 `;
 
-const legalContractClausePrompt = `3. Legal Contract Clause Classification and Critical Entity Extraction
-
-**INPUT FORMAT**: Legal contract documents in plain text format, typically 1,000-10,000 words. Documents may include standard contract sections like recitals, definitions, terms and conditions, warranties, liability limitations, termination clauses, and signature blocks. Text may contain legal jargon, defined terms in capitals, and cross-references.
+const legalContractClausePrompt = `**INPUT FORMAT**: Legal contract documents in plain text format, typically 1,000-10,000 words. Documents may include standard contract sections like recitals, definitions, terms and conditions, warranties, liability limitations, termination clauses, and signature blocks. Text may contain legal jargon, defined terms in capitals, and cross-references.
 
 **TASK DESCRIPTION**: You are a legal document analysis system designed to parse contracts and extract key business terms, classify contract types, identify critical clauses, and flag potential risks. This system helps legal teams quickly review contracts and identify important provisions.
 
