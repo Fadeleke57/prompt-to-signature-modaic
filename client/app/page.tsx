@@ -149,7 +149,10 @@ export default function Home() {
           </Button>
         </div>
         <div className="font-semibold font-press-start-2p text-xs sm:text-sm order-2 sm:order-3">
-          <Link href={"https://modaic.dev/"} target="_blank">
+          <Link
+            href={"https://www.modaic.dev/fadeleke/prompt-to-signature"}
+            target="_blank"
+          >
             <span className="hidden sm:inline">Powered by </span>
             <span className="text-orange-500 font-bold">Modaic</span>
           </Link>
@@ -778,7 +781,10 @@ classify(image_1=dspy.Image.from_url(url))`}</code>
           sgntrs.dev
         </div>
         <div className="flex items-center gap-1 sm:gap-2 font-medium text-gray-600">
-          <Link href={"https://modaic.dev/"} target="_blank">
+          <Link
+            href={"https://www.modaic.dev/fadeleke/prompt-to-signature"}
+            target="_blank"
+          >
             <Button className="bg-orange-400 text-xs sm:text-sm px-3 sm:px-4">
               Modaic
             </Button>
