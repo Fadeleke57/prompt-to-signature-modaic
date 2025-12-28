@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
-from modaic import AutoAgent
+from modaic import AutoProgram
 from config import settings
 
 app = FastAPI()
@@ -27,7 +27,7 @@ class PromptPayload(BaseModel):
     prompt: str
     refine: bool = False
 
-prompt_to_signature_agent = AutoAgent.from_precompiled("fadeleke/prompt-to-signature")
+prompt_to_signature = AutoProgram.from_precompiled("farouk1/prompt-to-signature")
     
 @app.get("/")
 def read_root():
@@ -35,7 +35,7 @@ def read_root():
 
 @app.post("/prompt")
 async def create_prompt(payload: PromptPayload):
-    result = prompt_to_signature_agent(payload.prompt, refine=payload.refine)
-    code = prompt_to_signature_agent.generate_code(result)
+    result = prompt_to_signature(payload.prompt, refine=payload.refine)
+    code = prompt_to_signature.generate_code(result)
     return JSONResponse(content=code)
 
